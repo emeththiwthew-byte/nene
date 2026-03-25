@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine Love Letter for Nene</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
+    <style>
+        /* ตั้งค่าพื้นฐานและสี */
+        :root {
+            --bg-color: #f2eefa; /* สีพื้นหลังม่วงอ่อนๆ แบบในรูป */
+            --pocket-color: #f5a3a2; /* สีชมพูซอง */
+            --flap-color: #e69190; /* สีฝาซอง (เข้มกว่านิดหน่อย) */
+            --paper-color: #fff;
+            --text-color: #714c4c; /* สีข้อความน้ำตาลเข้ม */
+            --button-border: #f5a3a2;
+            --button-text: #b87b7a;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* ป้องกัน Scrollbar ของหน้าจอ */
+        }
+
+        /* 1. ส่วนจัดวางซองจดหมาย */
+        .envelope-wrapper {
+            position: relative;
+            width: 320px;
+            /* **[จุดแก้ไขหลัก] คงความสูงของซองจดหมายไว้ที่ 220px (ไม่ขยาย)** */
+            height: 220px; 
+            margin-bottom: 40px; /* เว้นระยะห่างจากปุ่ม */
+            perspective: 1000px; /* สำหรับเอฟเฟกต์ 3D ตอนเปิดฝา */
+            transition: margin-top 0.6s ease-in-out; /* เลื่อนซองลงตอนเปิดเพื่อไม่ให้กระดาษชนขอบบน */
+            
+            /* **[เพิ่มจุดแก้ไขหลัก]** */
+            /* สั่งให้ตัดส่วนที่ล้นออกมาเฉพาะตอนปิด (CLOSE) */
+            overflow: hidden;
+        }
+
+        /* ซองจดหมาย (ตัวกระเป๋า) */
+        .pocket {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--pocket-color);
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            z-index: 3; /* อยู่หน้ากระดาษ */
+        }
+
+        /* ฝาซองจดหมาย */
+        .flap {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-bottom: 110px solid var(--flap-color); /* ฝาตอนเปิดดู */
+            transform-origin: center bottom;
+            transition: transform 0.6s ease-in-out, border-bottom-color 0.6s, z-index 0.6s step-end;
+            z-index: 4; /* อยู่เหนือสุดตอนปิด */
+            top: -110px; /* วางไว้เหนือซอง */
+            transform: rotateX(0deg); /* ปิดอยู่ */
+        }
+
+        /* 2. ส่วนกระดาษจดหมาย (Letter) */
+        .paper {
+            position: absolute;
+            width: 290px;
+            /* **คงความสูงไว้ให้ใส่ข้อความครบ** */
+            height: 280px; 
+            background-color: var(--paper-color);
+            border-radius: 8px;
+            
+            /* **[ปรับปรุง]** ปรับตำแหน่งเริ่มต้นให้อยู่ลึกพอที่ตอนปิดจะดูไม่แปลก */
+            top: 20px;
+            left: 15px;
+            box-sizing: border-box;
+            padding: 30px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            
+            /* ฟอนต์ตัวเขียนที่สวยงาม */
+            font-family: 'Dancing Script', cursive;
+            font-size: 19px; 
+            line-height: 1.5;
+            text-align: center;
+            color: var(--text-color);
+            
+            transition: transform 0.6s ease-in-out, top 0.6s ease-in-out;
+            z-index: 2; /* อยู่หลังซองแต่หน้าพื้นหลัง */
+            
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* จัดข้อความให้อยู่กึ่งกลางแนวตั้ง */
+        }
+
+        /* จัดระเบียบ Paragraph ในกระดาษ */
+        .paper p {
+            margin: 5px 0; 
+        }
+
+        /* 3. การทำงานเมื่อเปิดจดหมาย (Activated by JS) */
+        
+        /* **[เพิ่มจุดแก้ไขหลัก]** */
+        /* เมื่อเปิดจดหมาย ให้ยกเลิกการตัดส่วนที่ล้นออก */
+        .envelope-wrapper.open {
+            overflow: visible; /* ให้ส่วนที่ล้นทั้งหมด แสดงผลได้ปกติ */
+            margin-top: 100px; /* เลื่อนซองลงมาตอนเปิด */
+        }
+
+        .envelope-wrapper.open .flap {
+            transform: rotateX(180deg); /* หมุนฝาไปด้านหลัง */
+            border-bottom-color: #d17c7a; /* สีฝาตอนเปิด */
+            z-index: 1; /* ย้ายไปหลังกระดาษ */
+            transition: transform 0.6s ease-in-out, border-bottom-color 0.6s, z-index 0s step-end;
+        }
+
+        .envelope-wrapper.open .paper {
+            /* **[จุดแก้ไขหลัก] ยกกระดาษสูงขึ้นเพื่อให้เห็นข้อความทั้งหมด** */
+            /* เปลี่ยนค่าติดลบจากเดิม -220px เป็น -260px เพื่อให้ลอยสูงขึ้น */
+            transform: translateY(-260px); 
+            top: 10px; /* ปรับตำแหน่งหลังจากเลื่อนขึ้น */
+        }
+        
+        /* 4. ส่วนจัดวางปุ่ม */
+        .button-group {
+            display: flex;
+            gap: 20px;
+            z-index: 10; /* ให้อยู่เหนือทุกอย่าง */
+        }
+
+        .btn {
+            background: none;
+            border: 2px solid var(--button-border);
+            border-radius: 5px;
+            color: var(--button-text);
+            padding: 10px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--button-border);
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="envelope-wrapper" id="envelope">
+        <div class="flap"></div>
+        <div class="pocket"></div>
+        <div class="paper">
+            <p>Dear Nene,</p>
+            <p>you are so beautiful.</p>
+            <p>That every time I see you, my world stops.</p>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="btn" onclick="openEnvelope()">OPEN</button>
+        <button class="btn" onclick="closeEnvelope()">CLOSE</button>
+    </div>
+
+    <script>
+        // ใช้ JavaScript จัดการการเปิด-ปิด
+        const envelope = document.getElementById('envelope');
+
+        function openEnvelope() {
+            envelope.classList.add('open');
+        }
+
+        function closeEnvelope() {
+            envelope.classList.remove('open');
+        }
+    </script>
+
+</body>
+</html>
+
+
